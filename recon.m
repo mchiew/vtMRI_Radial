@@ -12,9 +12,9 @@ setup_irt;
 %   If raw data has not been "prepared", prepare it
 %   This only needs to be done once ever for each dat file
 %
-%   prep_dat('INPUT.dat', 'OUTPUT_NAME', [Nc], [shift])
+%   prep_dat('INPUT.dat', 'OUTPUT_NAME', [Nc], [crop], [shift])
 %
-%   This takes 2 mandatory and 2 optional parameters:
+%   This takes 2 mandatory and 3 optional parameters:
 %
 %       'INPUT.dat'     is the raw data filename
 %       'OUTPUT_NAME'   is the name of the prepared mat-file
@@ -24,15 +24,18 @@ setup_irt;
 %                       If you leave it out it uses the maximum number
 %                       of coils by default
 %                       I recommend a value somewhere between Nc = 8 and 16
+%       [crop]          is the amount to crop the FOV to a smaller image
+%                       defaults to 96
 %       [shift]         is the amount to shift the image to better centre
 %                       the head. 
-%                       Defaults to [-10, -40] to shift the head up 40 pixels
-%                       and to the left 10 pixels. Modify if necessary
+%                       Defaults to [-20, -30] to shift the head up 30 pixels
+%                       and to the left 20 pixels. Modify if necessary
 %       
 
 twix_data = 'TWIX_FILENAME.dat';
-coil_compression = 12;
-prep_dat(twix_data, 'test', coil_compression, [-10, -30]);
+coil_compression = 16;
+crop_size        = 96;
+prep_dat(twix_data, 'test', coil_compression, crop_size, [-20, -30]);
 
 %   Setup and run reconstruction
 %   
@@ -48,7 +51,13 @@ prep_dat(twix_data, 'test', coil_compression, [-10, -30]);
 %                       30 ms, resulting in 1/.03 = 33.33 FPS
 %                       More spokes means better images, but lower FPS
 %                       Recommend 12 spokes, definitely no lower than 8 (50 FPS)
-%       index           dictates the total number of spokes to use
+%       opts            is a struct() that has fields corresponding to reconstruction options
+%                       These options are:
+%       opts.lambda     lambda weighting for LLR reconstruction
+%       opts.patch      patch size for LLR reconstruction
+%       opts.iters      applies to both, denotes the number of iterations to perform
+%       opts.Nx         output image matrix size
+%       opts.range      dictates the total number of spokes to use
 %                       index = 1:12000 for example, uses the first 12000 shots,
 %                       which when spokes = 12, means a total of 1000 frames over
 %                       a duration of 30s.
@@ -60,21 +69,17 @@ prep_dat(twix_data, 'test', coil_compression, [-10, -30]);
 %                       in the data, so some care has to be taken when choosing this
 %                       Pre-determined parameters have been chosen for spokes=12, and
 %                       an index length of 12000
-%       opts            is a struct() that has fields corresponding to reconstruction options
-%                       These options are:
-%       opts.lambda     lambda weighting for LLR reconstruction
-%       opts.patch      patch size for LLR reconstruction
-%       opts.iters      applies to both, denotes the number of iterations to perform
-%       opts.Nx         output image matrix size
+%                       Empty input [] defaults to all spokes
 
-opts.lambda = 1E-6;
-opts.patch  = [7 7 50];
-opts.iters  = 100;
-opts.Nx     = 160;
+opts.lambda = 2E-6;         % Consider values between approx [1E-6, 3E-6]
+opts.patch  = [8 8 512];    % If you change this, you'll have to change lambda
+opts.iters  = 100;          % Number of iterations for reconstruction
+opts.Nx     = crop_size;    
+opts.range  = [];           % Choose spokes to reconstruct. If empty, defaults to all
 
 %   Run recon
 spokes_per_frame = 12;
-out = recon_kernel('test', spokes_per_frame, 2001:3000, opts);
+out = recon_kernel('test', spokes_per_frame, opts);
     
 %   Generate movie
 %
@@ -109,4 +114,4 @@ out = recon_kernel('test', spokes_per_frame, 2001:3000, opts);
 %           'Indexed AVI'      - Uncompressed AVI file with Indexed video.
 %                       
     
-gen_movie('test_movie', out(17:144,17:144,:), 1/(0.0025*spokes_per_frame), 99, 'MPEG-4');
+gen_movie('test_movie', squeeze(abs(out)), 1/(0.0025*spokes_per_frame), 99.9, 'MPEG-4');

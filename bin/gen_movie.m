@@ -21,6 +21,7 @@ end
 v   =   VideoWriter(fname, mov_type);
 
 v.FrameRate =   fps;
+v.Quality = 100;
 open(v);
 writeVideo(v, M);
 close(v);

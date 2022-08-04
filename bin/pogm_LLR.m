@@ -10,7 +10,7 @@ function x = pogm_LLR(E, dd, lambda, patch_size, im_size, niter)
     x   =   zeros(im_size);
     y   =   zeros(im_size);
     z   =   zeros(im_size);
-    y0  =   zeros(im_size);
+    w   =   zeros(im_size);
     
     dd  =   reshape(dd, im_size);
 
@@ -43,16 +43,17 @@ for iter = 1:niter
     b   =   (2*a0+a-1)/(L*a);
 
     %   x-update
-    %[ii,jj,kk]  =   meshgrid(randperm(p(1),1)-(p(1)-1)/2:p(1):im_size(1),randperm(p(2),1)-(p(2)-1)/2:p(2):im_size(2),randperm(p(3),1)-(p(3)-1)/2:p(3):im_size(4));
-    [ii,jj,kk]  =   meshgrid(randperm(floor(p(1)/2),1):p(1):im_size(1),randperm(floor(p(2)/2),1):p(2):im_size(2),randperm(floor(p(3)/2),1):p(3):im_size(4));
+    [ii,jj,kk]  =   meshgrid(randperm(floor(p(1)/2),1):p(1)/2:im_size(1),randperm(floor(p(2)/2),1):p(2)/2:im_size(2),randperm(floor(p(3)/2),1)-p(3)/2+1:p(3)/2:im_size(4));
    
+    w = 0*w;
     for idx = 1:length(ii(:))
         q   =   get_patch(z, ii(idx), jj(idx), kk(idx), p);
         [u,s,v]     =   svd(reshape(q,[],size(q,4)),'econ');
         s   =   shrink(s, lambda*b); 
         q   =   reshape(u*s*v', size(q));
-        x   =   put_patch(x, q, ii(idx), jj(idx), kk(idx), p);
+        w   =   put_patch(w, q, ii(idx), jj(idx), kk(idx), p);
     end
+    x(w ~= 0) = w(w ~= 0);
     
     %   Display iteration summary data
     fprintf(1, '%-5d -\n', iter);
@@ -63,16 +64,19 @@ end
 function q = get_patch(X, i, j, k, p)
 
     [sx,sy,~,st]    =   size(X);
-    %q               =   X(max(i-(p(1)-1)/2,1):min(i+(p(1)-1)/2,sx),max(j-(p(2)-1)/2,1):min(j+(p(2)-1)/2,sy), 1, max(k-(p(3)-1)/2,1):min(k+(p(3)-1)/2,st));
-    q               =   X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, k:min(k+p(3)-1,st));
+    q               =   X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st));
     
+    if size(q,4) < p(3)
+        q = padarray(q, [p(1)-size(q,1), p(2)-size(q,2), 0, p(3)-size(q,4)], 'replicate', 'post');
+    end
 end
 
 function X = put_patch(X, q, i, j, k, p)
 
     [sx,sy,~,st]    =   size(X);
-    %X(max(i-(p(1)-1)/2,1):min(i+(p(1)-1)/2,sx),max(j-(p(2)-1)/2,1):min(j+(p(2)-1)/2,sy), 1, max(k-(p(3)-1)/2,1):min(k+(p(3)-1)/2,st)) = q;
-    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, k:min(k+p(3)-1,st)) = q;
+    mask = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) ~= 0;
+    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) + q(1:length(i:min(i+p(1)-1,sx)),1:length(j:min(j+p(2)-1,sy)),1,1:length(max(k,1):min(k+p(3)-1,st)));
+    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st))./(mask+1);
     
 end
 
