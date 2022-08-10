@@ -43,8 +43,9 @@ for iter = 1:niter
     b   =   (2*a0+a-1)/(L*a);
 
     %   x-update
-    [ii,jj,kk]  =   meshgrid(randperm(floor(p(1)/2),1):p(1)/2:im_size(1),randperm(floor(p(2)/2),1):p(2)/2:im_size(2),randperm(floor(p(3)/2),1)-p(3)/2+1:p(3)/2:im_size(4));
-   
+    [ii,jj,kk]  =   meshgrid(randperm(floor(p(1)/2),1):p(1)/2:im_size(1),randperm(floor(p(2)/2),1):p(2)/2:im_size(2),randperm(floor(p(3)/2),1)-p(3)/2+1:p(3)/2:im_size(4)-p(3)/2);
+    
+    
     w = 0*w;
     for idx = 1:length(ii(:))
         q   =   get_patch(z, ii(idx), jj(idx), kk(idx), p);
