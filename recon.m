@@ -32,19 +32,19 @@ setup_irt;
 %                       and to the left 20 pixels. Modify if necessary
 %       
 
-twix_data = 'TWIX_FILENAME.dat';
+twix_data = 'TWIX_DATA.dat';
 coil_compression = 16;
 crop_size        = 96;
-prep_dat(twix_data, 'test', coil_compression, crop_size, [-20, -30]);
+prep_dat(twix_data, coil_compression, crop_size, [-20, -30]);
 
 %   Setup and run reconstruction
 %   
-%   recon_kernel('MATFILE_NAME', spokes, index, opts) 
+%   recon_kernel(twix_data, spokes, index, opts) 
 %
 %   This takes 4 mandatory parameters:
 %
-%       'MATFILE_NAME'  is the name of the prepared mat-file
-%                       this should be the same as 'OUTPUT_NAME' from above
+%       twix_data       is the filename for the associated raw twix file
+%                       prepared data mat-file is automatically named
 %       spokes          is the number of spokes/shots/TRs to combine into 
 %                       a single image. Each shot is acquired with a TR=2.5 ms
 %                       so using 12 spokes for example, gives 1 image every
@@ -71,7 +71,7 @@ prep_dat(twix_data, 'test', coil_compression, crop_size, [-20, -30]);
 %                       an index length of 12000
 %                       Empty input [] defaults to all spokes
 
-opts.lambda = 2E-6;         % Consider values between approx [1E-6, 3E-6]
+opts.lambda = 1E-2;         % Consider values between approx [1E-2, 2E-2]
 opts.patch  = [8 8 512];    % If you change this, you'll have to change lambda
 opts.iters  = 100;          % Number of iterations for reconstruction
 opts.Nx     = crop_size;    
@@ -79,15 +79,16 @@ opts.range  = [];           % Choose spokes to reconstruct. If empty, defaults t
 
 %   Run recon
 spokes_per_frame = 12;
-out = recon_kernel('test', spokes_per_frame, opts);
+out = recon_kernel(twix_data, spokes_per_frame, opts);
     
 %   Generate movie
 %
-%   gen_movie('MOV_NAME', data, FPS, scale, ['mov_type'])
+%   gen_movie(twix_data, data, FPS, scale, ['mov_type'])
 %
 %   This takes 4 mandatory and 1 optional parameter
 %   
-%       'MOV_NAME'      is the filename for the output movie
+%       twix_data       is the filename for the associated raw twix file
+%                       movie is automatically named based on this
 %       data            is the [Nx, Ny, Nt] dataset returned by recon_kernel
 %                       any cropping of the images can be done here
 %                       By default, data is [160,160,Nt] so to crop to 128x128xNt
@@ -114,4 +115,4 @@ out = recon_kernel('test', spokes_per_frame, opts);
 %           'Indexed AVI'      - Uncompressed AVI file with Indexed video.
 %                       
     
-gen_movie('test_movie', squeeze(abs(out)), 1/(0.0025*spokes_per_frame), 99.9, 'MPEG-4');
+gen_movie(twix_data, squeeze(abs(out)), 1/(0.0025*spokes_per_frame), 99.9, 'MPEG-4');

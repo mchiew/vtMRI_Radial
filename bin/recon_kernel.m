@@ -1,10 +1,11 @@
-function out = recon_kernel(data_mat, spokes, opt)
+function out = recon_kernel(raw_data, spokes, opt)
 
 %   spokes is the number of spokes per frame
 %   t_idx is the indices of the spokes used for recon
 %   spokes should divide length(t_idx)
 %   so that frames = length(t_idx)/spokes
 
+[~,data_mat,~] = fileparts(raw_data);
 q   =   matfile(data_mat);
 
 if isempty(opt.range)
@@ -18,8 +19,10 @@ ps  =   q.sens;
 nc  =   size(dd,3);
 
 if opt.patch(3) > fr
-    opt.patch(3) = fr;
+    opt.patch(3) = fr;   
 end
+
+opt.lambda = opt.lambda*prctile(abs(dd(:)),99);
 
 k   =   reshape(q.k(:,t_idx,:),[],fr,2);
 

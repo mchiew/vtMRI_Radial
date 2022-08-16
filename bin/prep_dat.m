@@ -1,4 +1,6 @@
-function prep_dat(raw_data, data_name, compress, crop, shift)
+function prep_dat(raw_data, compress, crop, shift)
+
+[~,data_name,~] = fileparts(raw_data);
 
 if exist(strcat(data_name,'.mat'), 'file')
     return
@@ -26,9 +28,9 @@ dd  =   permute(dd,[1,3,2]);
 
 %   Check if data truncated for whatever reason
 if map.image.NAcq < map.image.NLin*map.image.NRep
-    dd  =   dd(:,:,1:map.image.NLin*(map.image.NRep-1));
+    dd  =   dd(:,1:map.image.NLin*(map.image.NRep-1),:);
 end
-nt  =   size(dd,3);
+nt  =   size(dd,2);
 
 
 if nargin < 3
@@ -36,10 +38,10 @@ if nargin < 3
 end
 
 
-k   =   gen_radial(0,nr,size(dd,2),1,360,1);
+k   =   gen_radial(0,nr,nt,1,360,1);
 k   =   cat(3,k(:,:,1),-1*k(:,:,2));
 
-inc = (0:size(dd,2)-1)*180/((1+sqrt(5))/2);
+inc = (0:nt-1)*180/((1+sqrt(5))/2);
 
 p   = exp(-1j*2*pi*linspace(-0.5,0.5,nr)'*(shift(2)*cosd(inc)+shift(1)*sind(inc)));
 dd  = bsxfun(@times, p, dd);

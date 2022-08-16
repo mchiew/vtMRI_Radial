@@ -1,8 +1,10 @@
-function gen_movie(fname, data, fps, scale, mov_type)
+function gen_movie(twix_data, data, fps, scale, mov_type)
 
 if nargin < 5
     mov_type = 'Grayscale AVI';
 end
+
+[~,fname,~] = fileparts(twix_data);
 
 scale   =   prctile(abs(data(:)), scale);
 data    =   double(abs(data)/scale);
