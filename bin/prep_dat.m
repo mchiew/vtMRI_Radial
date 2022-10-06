@@ -6,13 +6,13 @@ if exist(strcat(data_name,'.mat'), 'file')
     return
 end
 
-if nargin < 5
+if nargin < 4
     shift = [-20, -30];
 end
-if nargin < 4
+if nargin < 3
     crop = 96;
 end
-if nargin < 3
+if nargin < 2
     compress = 16;
 end
 
