@@ -43,7 +43,7 @@ for iter = 1:niter
     b   =   (2*a0+a-1)/(L*a);
 
     %   x-update
-    [ii,jj,kk]  =   meshgrid(randperm(floor(p(1)/2),1):p(1)/2:im_size(1),randperm(floor(p(2)/2),1):p(2)/2:im_size(2),randperm(floor(p(3)/2),1)-floor(p(3)/2)+1:floor(p(3)/2):im_size(4)-floor(p(3)/2));
+    [ii,jj,kk]  =   meshgrid(randperm(floor(p(1)/2),1):p(1)/2:im_size(1),randperm(floor(p(2)/2),1):p(2)/2:im_size(2),randperm(p(3),1):p(3):im_size(4));
     
     
     w = 0*w;
@@ -65,19 +65,18 @@ end
 function q = get_patch(X, i, j, k, p)
 
     [sx,sy,~,st]    =   size(X);
-    q               =   X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st));
+    idx_t           =   st-mod(k:k+p(3)-1, st);
+    q               =   X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, idx_t);
     
-    if size(q,4) < p(3)
-        q = padarray(q, [p(1)-size(q,1), p(2)-size(q,2), 0, p(3)-size(q,4)], 'replicate', 'post');
-    end
 end
 
 function X = put_patch(X, q, i, j, k, p)
 
     [sx,sy,~,st]    =   size(X);
-    mask = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) ~= 0;
-    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) + q(1:length(i:min(i+p(1)-1,sx)),1:length(j:min(j+p(2)-1,sy)),1,1:length(max(k,1):min(k+p(3)-1,st)));
-    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st)) = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, max(k,1):min(k+p(3)-1,st))./(mask+1);
+    idx_t           =   st-mod(k:k+p(3)-1, st);
+    mask = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, idx_t) ~= 0;
+    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, idx_t) = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, idx_t) + q(1:length(i:min(i+p(1)-1,sx)),1:length(j:min(j+p(2)-1,sy)),1,1:length(idx_t));
+    X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, idx_t) = X(i:min(i+p(1)-1,sx),j:min(j+p(2)-1,sy), 1, idx_t)./(mask+1);
     
 end
 
